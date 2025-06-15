@@ -157,47 +157,47 @@ export const FloatingMusicPlayer: React.FC<FloatingMusicPlayerProps> = ({
         <div className="bg-dark-800/95 backdrop-blur-md border-t border-dark-600 shadow-lg">
           {/* Expand/collapse toggle */}
           <div 
-            className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-10 h-6 bg-dark-800 border border-dark-600 rounded-t-lg flex items-center justify-center cursor-pointer"
+            className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-8 h-5 bg-dark-800 border border-dark-600 rounded-t-lg flex items-center justify-center cursor-pointer"
             onClick={toggleExpand}
           >
             {isExpanded ? (
-              <ChevronDown className="w-4 h-4 text-gray-400" />
+              <ChevronDown className="w-3 h-3 text-gray-400" />
             ) : (
-              <ChevronUp className="w-4 h-4 text-gray-400" />
+              <ChevronUp className="w-3 h-3 text-gray-400" />
             )}
           </div>
           
           {isExpanded ? (
-            <div className="p-4">
-              <div className="flex items-center mb-3">
-                <div className="w-12 h-12 bg-dark-700 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
-                  <Volume2 className="w-6 h-6 text-neon-blue" />
+            <div className="p-3">
+              <div className="flex items-center mb-2">
+                <div className="w-10 h-10 bg-dark-700 rounded-lg flex items-center justify-center mr-2 flex-shrink-0">
+                  <Volume2 className="w-5 h-5 text-neon-blue" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-white font-medium truncate">{currentSound.title}</h4>
-                  <p className="text-gray-400 text-sm truncate">{currentSound.location_name}</p>
+                  <h4 className="text-white text-sm font-medium truncate">{currentSound.title}</h4>
+                  <p className="text-gray-400 text-xs truncate">{currentSound.location_name}</p>
                 </div>
                 <button
                   onClick={togglePlay}
-                  className={`w-10 h-10 ${isPlaying ? 'bg-neon-blue' : 'bg-neon-blue/20'} rounded-full flex items-center justify-center ml-3 flex-shrink-0`}
+                  className={`w-8 h-8 ${isPlaying ? 'bg-neon-blue' : 'bg-neon-blue/20'} rounded-full flex items-center justify-center ml-2 flex-shrink-0`}
                 >
                   {isPlaying ? (
-                    <Pause className={`w-4 h-4 ${isPlaying ? 'text-dark-900' : 'text-neon-blue'}`} />
+                    <Pause className={`w-3 h-3 ${isPlaying ? 'text-dark-900' : 'text-neon-blue'}`} />
                   ) : (
-                    <Play className={`w-4 h-4 ml-0.5 ${isPlaying ? 'text-dark-900' : 'text-neon-blue'}`} />
+                    <Play className={`w-3 h-3 ml-0.5 ${isPlaying ? 'text-dark-900' : 'text-neon-blue'}`} />
                   )}
                 </button>
               </div>
               
               {/* Waveform visualization */}
-              <div className="relative h-12 bg-dark-700 rounded-lg overflow-hidden mb-2">
+              <div className="relative h-8 bg-dark-700 rounded-lg overflow-hidden mb-2">
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-neon-blue/20 to-neon-blue/20"
                   style={{ width: `${progressPercentage}%` }}
                   transition={{ duration: 0.1 }}
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
-                  {[...Array(30)].map((_, i) => (
+                  {[...Array(20)].map((_, i) => (
                     <motion.div
                       key={i}
                       className="w-1 bg-neon-blue/60 mx-0.5 rounded-full"
@@ -220,7 +220,7 @@ export const FloatingMusicPlayer: React.FC<FloatingMusicPlayerProps> = ({
               {/* Seekable progress bar */}
               <div 
                 ref={progressBarRef}
-                className="relative h-2 bg-dark-700 rounded-full mb-2 cursor-pointer touch-none"
+                className="relative h-2 bg-dark-700 rounded-full mb-1 cursor-pointer touch-none"
                 onClick={handleProgressBarClick}
                 onMouseDown={handleSeekStart}
                 onMouseMove={handleSeekMove}
@@ -235,9 +235,9 @@ export const FloatingMusicPlayer: React.FC<FloatingMusicPlayerProps> = ({
                   style={{ width: `${progressPercentage}%` }}
                 />
                 <div 
-                  className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-md"
+                  className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow-md"
                   style={{ 
-                    left: `calc(${progressPercentage}% - 8px)`,
+                    left: `calc(${progressPercentage}% - 6px)`,
                     display: isDragging || isExpanded ? 'block' : 'none'
                   }}
                 />
@@ -250,15 +250,15 @@ export const FloatingMusicPlayer: React.FC<FloatingMusicPlayerProps> = ({
               </div>
             </div>
           ) : (
-            <div className="flex items-center p-2">
+            <div className="flex items-center p-1.5">
               <button
                 onClick={togglePlay}
-                className={`w-7 h-7 ${isPlaying ? 'bg-neon-blue' : 'bg-neon-blue/20'} rounded-full flex items-center justify-center mr-3 flex-shrink-0`}
+                className={`w-6 h-6 ${isPlaying ? 'bg-neon-blue' : 'bg-neon-blue/20'} rounded-full flex items-center justify-center mr-2 flex-shrink-0`}
               >
                 {isPlaying ? (
-                  <Pause className={`w-3 h-3 ${isPlaying ? 'text-dark-900' : 'text-neon-blue'}`} />
+                  <Pause className={`w-2.5 h-2.5 ${isPlaying ? 'text-dark-900' : 'text-neon-blue'}`} />
                 ) : (
-                  <Play className={`w-3 h-3 ml-0.5 ${isPlaying ? 'text-dark-900' : 'text-neon-blue'}`} />
+                  <Play className={`w-2.5 h-2.5 ml-0.5 ${isPlaying ? 'text-dark-900' : 'text-neon-blue'}`} />
                 )}
               </button>
               
@@ -268,7 +268,7 @@ export const FloatingMusicPlayer: React.FC<FloatingMusicPlayerProps> = ({
                 {/* Seekable mini progress bar */}
                 <div 
                   ref={progressBarRef}
-                  className="relative w-full h-1 bg-dark-600 rounded-full mt-1 cursor-pointer touch-none"
+                  className="relative w-full h-1 bg-dark-600 rounded-full mt-0.5 cursor-pointer touch-none"
                   onClick={handleProgressBarClick}
                   onTouchStart={handleSeekStart}
                   onTouchMove={handleSeekMove}
@@ -282,7 +282,7 @@ export const FloatingMusicPlayer: React.FC<FloatingMusicPlayerProps> = ({
               </div>
               
               <div className="text-xs text-gray-400 ml-2 flex-shrink-0">
-                {formatTime(currentTime)} / {formatTime(duration)}
+                {formatTime(currentTime)}
               </div>
             </div>
           )}

@@ -2,6 +2,7 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { MapPin, Play, Pause } from 'lucide-react'
 import { Sound } from '../lib/supabase'
+import { formatLocationName } from '../lib/utils'
 
 interface SoundCardProps {
   sound: Sound
@@ -11,6 +12,8 @@ interface SoundCardProps {
 }
 
 export const SoundCard: React.FC<SoundCardProps> = ({ sound, onPlay, onViewDetails, isPlaying = false }) => {
+  const formattedLocation = formatLocationName(sound.location_name, sound.latitude, sound.longitude)
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -49,7 +52,7 @@ export const SoundCard: React.FC<SoundCardProps> = ({ sound, onPlay, onViewDetai
         {/* Location */}
         <div className="flex items-center text-xs text-gray-400">
           <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-          <span className="truncate">{sound.location_name || `${sound.latitude.toFixed(2)}, ${sound.longitude.toFixed(2)}`}</span>
+          <span className="truncate">{formattedLocation}</span>
         </div>
       </div>
       

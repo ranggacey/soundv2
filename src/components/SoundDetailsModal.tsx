@@ -2,6 +2,7 @@ import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, MapPin, Calendar, Play, Pause, Volume2 } from 'lucide-react'
 import { Sound } from '../lib/supabase'
+import { formatLocationName } from '../lib/utils'
 
 interface SoundDetailsModalProps {
   sound: Sound | null
@@ -27,6 +28,8 @@ export const SoundDetailsModal: React.FC<SoundDetailsModalProps> = ({
       day: 'numeric'
     })
   }
+
+  const formattedLocation = formatLocationName(sound.location_name, sound.latitude, sound.longitude)
 
   // This function will handle both toggling play state and closing the modal
   const handlePlayAndClose = () => {
@@ -86,7 +89,7 @@ export const SoundDetailsModal: React.FC<SoundDetailsModalProps> = ({
                 <div className="flex items-center text-sm">
                   <MapPin className="w-4 h-4 text-neon-blue mr-2" />
                   <span className="text-gray-300">
-                    {sound.location_name || `${sound.latitude.toFixed(4)}, ${sound.longitude.toFixed(4)}`}
+                    {formattedLocation}
                   </span>
                 </div>
                 
