@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Filter, Play, Pause } from 'lucide-react'
+import { Search, Play, Pause, X } from 'lucide-react'
 import { InteractiveMap } from '../components/InteractiveMap'
 import { SoundCard } from '../components/SoundCard'
 import { AudioPlayer } from '../components/AudioPlayer'
 import { Sound, soundsService } from '../lib/supabase'
+import { SoundDetailsModal } from '../components/SoundDetailsModal'
+import { FloatingMusicPlayer } from '../components/FloatingMusicPlayer'
+import { FilterBar } from '../components/FilterBar'
+import { Pagination } from '../components/Pagination'
 
 export const ExplorePage: React.FC = () => {
   const [sounds, setSounds] = useState<Sound[]>([])
@@ -12,8 +16,33 @@ export const ExplorePage: React.FC = () => {
   const [selectedSound, setSelectedSound] = useState<Sound | null>(null)
   const [currentlyPlaying, setCurrentlyPlaying] = useState<Sound | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [viewMode, setViewMode] = useState<'map' | 'grid'>('map')
+  const [viewMode, setViewMode] = useState<'map' | 'grid'>('grid')
   const [loading, setLoading] = useState(true)
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
+  const [isPlayerMinimized, setIsPlayerMinimized] = useState(true)
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 12
+  
+  // Tag filtering
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  
+  // Check if we're on mobile
+  const [isMobile, setIsMobile] = useState(false)
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile)
+    }
+  }, [])
 
   // Mock data for demonstration (fallback if Supabase not connected)
   const mockSounds: Sound[] = [
@@ -76,6 +105,126 @@ export const ExplorePage: React.FC = () => {
       updated_at: '2024-01-11T12:00:00Z',
       location_name: 'Times Square Station, NYC',
       tags: ['urban', 'transport', 'busy']
+    },
+    {
+      id: '6',
+      title: 'Ocean Waves',
+      description: 'Gentle waves crashing on a sandy beach at sunset',
+      audio_url: 'https://www.soundjay.com/nature/sounds/ocean-wave-1.wav',
+      latitude: -33.8688,
+      longitude: 151.2093,
+      created_at: '2024-01-10T09:15:00Z',
+      updated_at: '2024-01-10T09:15:00Z',
+      location_name: 'Bondi Beach, Sydney',
+      tags: ['water', 'nature', 'relaxing']
+    },
+    {
+      id: '7',
+      title: 'Campfire Crackle',
+      description: 'Wood crackling in a campfire under starry night sky',
+      audio_url: 'https://www.soundjay.com/nature/sounds/campfire-1.wav',
+      latitude: 36.1069,
+      longitude: -112.1129,
+      created_at: '2024-01-09T20:45:00Z',
+      updated_at: '2024-01-09T20:45:00Z',
+      location_name: 'Grand Canyon, Arizona',
+      tags: ['fire', 'nature', 'night']
+    },
+    {
+      id: '8',
+      title: 'Paris Cafe',
+      description: 'Ambient sounds of a busy Parisian cafe with distant conversations',
+      audio_url: 'https://www.soundjay.com/human/sounds/restaurant-crowd-1.wav',
+      latitude: 48.8566,
+      longitude: 2.3522,
+      created_at: '2024-01-08T11:20:00Z',
+      updated_at: '2024-01-08T11:20:00Z',
+      location_name: 'Montmartre, Paris',
+      tags: ['urban', 'social', 'relaxing']
+    },
+    {
+      id: '9',
+      title: 'Thunderstorm',
+      description: 'Powerful thunderstorm with heavy rain and lightning',
+      audio_url: 'https://www.soundjay.com/nature/sounds/thunder-1.wav',
+      latitude: -27.4698,
+      longitude: 153.0251,
+      created_at: '2024-01-07T18:30:00Z',
+      updated_at: '2024-01-07T18:30:00Z',
+      location_name: 'Brisbane, Australia',
+      tags: ['weather', 'rain', 'powerful']
+    },
+    {
+      id: '10',
+      title: 'Mountain Stream',
+      description: 'Crystal clear water flowing over rocks in a mountain stream',
+      audio_url: 'https://www.soundjay.com/nature/sounds/stream-1.wav',
+      latitude: 46.6020,
+      longitude: 8.0298,
+      created_at: '2024-01-06T14:10:00Z',
+      updated_at: '2024-01-06T14:10:00Z',
+      location_name: 'Swiss Alps, Switzerland',
+      tags: ['water', 'nature', 'peaceful']
+    },
+    {
+      id: '11',
+      title: 'Jungle Night',
+      description: 'Nocturnal insects and animals in a dense tropical jungle',
+      audio_url: 'https://www.soundjay.com/nature/sounds/jungle-1.wav',
+      latitude: 0.9619,
+      longitude: 114.5548,
+      created_at: '2024-01-05T22:05:00Z',
+      updated_at: '2024-01-05T22:05:00Z',
+      location_name: 'Borneo Rainforest',
+      tags: ['wildlife', 'night', 'tropical']
+    },
+    {
+      id: '12',
+      title: 'Tokyo Crosswalk',
+      description: 'Busy Shibuya crossing with pedestrian signals and crowd ambience',
+      audio_url: 'https://www.soundjay.com/transportation/sounds/city-traffic-1.wav',
+      latitude: 35.6595,
+      longitude: 139.7004,
+      created_at: '2024-01-04T16:40:00Z',
+      updated_at: '2024-01-04T16:40:00Z',
+      location_name: 'Shibuya Crossing, Tokyo',
+      tags: ['urban', 'busy', 'city']
+    },
+    {
+      id: '13',
+      title: 'Market Bazaar',
+      description: 'Vibrant sounds of vendors and shoppers at a traditional market',
+      audio_url: 'https://www.soundjay.com/human/sounds/market-crowd-1.wav',
+      latitude: 41.0082,
+      longitude: 28.9784,
+      created_at: '2024-01-03T09:50:00Z',
+      updated_at: '2024-01-03T09:50:00Z',
+      location_name: 'Grand Bazaar, Istanbul',
+      tags: ['urban', 'social', 'busy']
+    },
+    {
+      id: '14',
+      title: 'Desert Night',
+      description: 'Quiet desert night with occasional wind and distant animal calls',
+      audio_url: 'https://www.soundjay.com/nature/sounds/desert-1.wav',
+      latitude: 27.9881,
+      longitude: 86.9250,
+      created_at: '2024-01-02T23:15:00Z',
+      updated_at: '2024-01-02T23:15:00Z',
+      location_name: 'Sahara Desert, Morocco',
+      tags: ['desert', 'night', 'peaceful']
+    },
+    {
+      id: '15',
+      title: 'Morning Birds',
+      description: 'Dawn chorus of birds in a spring forest',
+      audio_url: 'https://www.soundjay.com/nature/sounds/birds-1.wav',
+      latitude: 51.5074,
+      longitude: -0.1278,
+      created_at: '2024-01-01T05:30:00Z',
+      updated_at: '2024-01-01T05:30:00Z',
+      location_name: 'Hyde Park, London',
+      tags: ['wildlife', 'nature', 'morning']
     }
   ]
 
@@ -105,27 +254,91 @@ export const ExplorePage: React.FC = () => {
     }
   }
 
+  // Get all unique tags from sounds
+  const allTags = useMemo(() => {
+    const tags = new Set<string>()
+    sounds.forEach(sound => {
+      sound.tags?.forEach(tag => tags.add(tag))
+    })
+    return Array.from(tags).sort()
+  }, [sounds])
+
+  // Filter sounds based on search query and selected tags
   useEffect(() => {
-    if (searchQuery.trim() === '') {
-      setFilteredSounds(sounds)
-    } else {
-      const filtered = sounds.filter(sound =>
+    let filtered = sounds
+    
+    // Apply search filter
+    if (searchQuery.trim() !== '') {
+      filtered = filtered.filter(sound =>
         sound.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         sound.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         sound.location_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         sound.tags?.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
       )
-      setFilteredSounds(filtered)
     }
-  }, [searchQuery, sounds])
+    
+    // Apply tag filters
+    if (selectedTags.length > 0) {
+      filtered = filtered.filter(sound =>
+        selectedTags.every(tag => sound.tags?.includes(tag))
+      )
+    }
+    
+    setFilteredSounds(filtered)
+    setCurrentPage(1) // Reset to first page when filters change
+  }, [searchQuery, selectedTags, sounds])
+
+  // Get current page items
+  const currentSounds = useMemo(() => {
+    const indexOfLastItem = currentPage * itemsPerPage
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage
+    return filteredSounds.slice(indexOfFirstItem, indexOfLastItem)
+  }, [filteredSounds, currentPage, itemsPerPage])
+
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredSounds.length / itemsPerPage)
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   const handleSoundSelect = (sound: Sound) => {
     setSelectedSound(sound)
+    // Automatically play the sound when selected
     setCurrentlyPlaying(sound)
+    
+    if (isMobile) {
+      setIsDetailsModalOpen(true)
+    }
   }
 
   const handlePlay = (sound: Sound) => {
     setCurrentlyPlaying(currentlyPlaying?.id === sound.id ? null : sound)
+  }
+
+  const closeDetailsModal = () => {
+    setIsDetailsModalOpen(false)
+  }
+
+  const togglePlayerMinimize = () => {
+    setIsPlayerMinimized(!isPlayerMinimized)
+  }
+
+  const closePlayer = () => {
+    setCurrentlyPlaying(null)
+  }
+
+  const handleTagSelect = (tag: string) => {
+    setSelectedTags([...selectedTags, tag])
+  }
+
+  const handleTagRemove = (tag: string) => {
+    setSelectedTags(selectedTags.filter(t => t !== tag))
+  }
+
+  const clearFilters = () => {
+    setSelectedTags([])
   }
 
   if (loading) {
@@ -141,18 +354,18 @@ export const ExplorePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-dark-900 pt-16">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-dark-900 pt-16 pb-20">
+      <div className="max-w-7xl mx-auto px-4 py-4 md:py-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
+          className="mb-4 md:mb-6"
         >
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">
+          <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">
             Explore <span className="text-neon-blue">SoundScape</span>
           </h1>
-          <p className="text-gray-400 text-base md:text-lg">
+          <p className="text-gray-400 text-sm md:text-lg">
             Discover unique sounds from around the world
           </p>
         </motion.div>
@@ -162,9 +375,9 @@ export const ExplorePage: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="flex flex-col md:flex-row gap-4 mb-6"
+          className="flex flex-col md:flex-row gap-3 mb-4 md:mb-6"
         >
-          {/* Search */}
+          {/* Search with Filter */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
@@ -172,7 +385,14 @@ export const ExplorePage: React.FC = () => {
               placeholder="Search sounds, locations, or tags..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-dark-800 border border-dark-600 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-gray-400 focus:border-neon-blue focus:outline-none transition-colors"
+              className="w-full bg-dark-800 border border-dark-600 rounded-lg pl-10 pr-12 py-2 text-white placeholder-gray-400 focus:border-neon-blue focus:outline-none transition-colors"
+            />
+            <FilterBar 
+              availableTags={allTags}
+              selectedTags={selectedTags}
+              onTagSelect={handleTagSelect}
+              onTagRemove={handleTagRemove}
+              onClearFilters={clearFilters}
             />
           </div>
 
@@ -186,7 +406,7 @@ export const ExplorePage: React.FC = () => {
                   : 'text-gray-400 hover:text-white'
               }`}
             >
-              Map View
+              Map
             </button>
             <button
               onClick={() => setViewMode('grid')}
@@ -196,15 +416,15 @@ export const ExplorePage: React.FC = () => {
                   : 'text-gray-400 hover:text-white'
               }`}
             >
-              Grid View
+              Grid
             </button>
           </div>
         </motion.div>
 
         {/* Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className={`grid grid-cols-1 ${!isMobile ? 'lg:grid-cols-3 gap-6' : 'gap-4'}`}>
           {/* Main Content */}
-          <div className="lg:col-span-2">
+          <div className={`${!isMobile ? 'lg:col-span-3' : ''}`}>
             {viewMode === 'map' ? (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -212,13 +432,13 @@ export const ExplorePage: React.FC = () => {
                 transition={{ delay: 0.2 }}
                 className="bg-dark-800/30 backdrop-blur-sm border border-dark-600 rounded-xl overflow-hidden"
               >
-                <div className="p-4 border-b border-dark-600">
+                <div className="p-3 border-b border-dark-600">
                   <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-semibold text-white">Interactive Map</h3>
-                    <span className="text-sm text-gray-400">{filteredSounds.length} sounds discovered</span>
+                    <h3 className="text-base font-semibold text-white">Interactive Map</h3>
+                    <span className="text-xs text-gray-400">{filteredSounds.length} sounds</span>
                   </div>
                 </div>
-                <div className="h-[500px]">
+                <div className="h-[400px] md:h-[500px]">
                   <InteractiveMap
                     sounds={filteredSounds}
                     onSoundSelect={handleSoundSelect}
@@ -231,71 +451,61 @@ export const ExplorePage: React.FC = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="bg-dark-800/30 backdrop-blur-sm border border-dark-600 rounded-xl p-4"
+                className="bg-dark-800/30 backdrop-blur-sm border border-dark-600 rounded-xl p-3"
               >
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-white">Sound Collection</h3>
-                  <span className="text-sm text-gray-400">{filteredSounds.length} sounds found</span>
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-base font-semibold text-white">Sound Collection</h3>
+                  <span className="text-xs text-gray-400">{filteredSounds.length} sounds</span>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                  {filteredSounds.length > 0 ? (
-                    filteredSounds.map((sound, index) => (
-                      <motion.div
-                        key={sound.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                        className="transform transition-all hover:scale-[1.02]"
-                      >
+                {filteredSounds.length > 0 ? (
+                  <>
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      {currentSounds.map((sound) => (
                         <SoundCard
+                          key={sound.id}
                           sound={sound}
                           onPlay={handlePlay}
                           onViewDetails={handleSoundSelect}
+                          isPlaying={currentlyPlaying?.id === sound.id}
                         />
-                      </motion.div>
-                    ))
-                  ) : (
-                    <div className="col-span-2 flex flex-col items-center justify-center py-10 text-center">
-                      <div className="w-16 h-16 bg-dark-700/50 rounded-full flex items-center justify-center mb-4">
-                        <Search className="w-8 h-8 text-gray-400" />
-                      </div>
-                      <h4 className="text-lg font-medium text-white mb-2">No sounds found</h4>
-                      <p className="text-gray-400 max-w-md">Try adjusting your search query or explore different categories</p>
+                      ))}
                     </div>
-                  )}
-                </div>
+                    
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                      <Pagination 
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                      />
+                    )}
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <div className="w-12 h-12 bg-dark-700/50 rounded-full flex items-center justify-center mb-3">
+                      <Search className="w-6 h-6 text-gray-400" />
+                    </div>
+                    <h4 className="text-base font-medium text-white mb-1">No sounds found</h4>
+                    <p className="text-gray-400 text-sm">Try adjusting your search query or filters</p>
+                  </div>
+                )}
               </motion.div>
             )}
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Currently Playing */}
-            {currentlyPlaying && (
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                <h3 className="text-lg font-semibold text-white mb-4">Now Playing</h3>
-                <AudioPlayer
-                  audioUrl={currentlyPlaying.audio_url}
-                  title={currentlyPlaying.title}
-                />
-              </motion.div>
-            )}
-
-            {/* Sound Details */}
-            {selectedSound && (
+          {/* Sidebar - Only show on desktop */}
+          {!isMobile && selectedSound && (
+            <div className="hidden lg:block">
+              {/* Sound Details */}
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
-                className="bg-dark-800/50 backdrop-blur-sm border border-dark-600 rounded-xl p-6"
+                className="bg-dark-800/50 backdrop-blur-sm border border-dark-600 rounded-xl p-4 mb-4"
               >
-                <h3 className="text-lg font-semibold text-white mb-4">Sound Details</h3>
-                <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-white mb-3">Sound Details</h3>
+                <div className="space-y-3">
                   <div>
                     <h4 className="font-medium text-neon-blue">{selectedSound.title}</h4>
                     <p className="text-sm text-gray-400 mt-1">{selectedSound.description}</p>
@@ -334,38 +544,65 @@ export const ExplorePage: React.FC = () => {
                       </div>
                     </div>
                   )}
+                  
+                  {/* Play button */}
+                  <button
+                    onClick={() => handlePlay(selectedSound)}
+                    className={`mt-2 w-full py-2 px-4 rounded-lg flex items-center justify-center space-x-2 ${
+                      currentlyPlaying?.id === selectedSound.id 
+                        ? 'bg-neon-blue text-dark-900' 
+                        : 'bg-neon-blue/20 text-neon-blue border border-neon-blue/30'
+                    }`}
+                  >
+                    {currentlyPlaying?.id === selectedSound.id ? (
+                      <>
+                        <Pause className="w-4 h-4" />
+                        <span>Pause Sound</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-4 h-4" />
+                        <span>Play Sound</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </motion.div>
-            )}
 
-            {/* Stats */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5 }}
-              className="bg-dark-800/50 backdrop-blur-sm border border-dark-600 rounded-xl p-6"
-            >
-              <h3 className="text-lg font-semibold text-white mb-4">Discovery Stats</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Total Sounds</span>
-                  <span className="text-neon-blue font-medium">{sounds.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Countries</span>
-                  <span className="text-neon-green font-medium">
-                    {new Set(sounds.map(s => s.location_name?.split(',').pop()?.trim())).size}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Filtered Results</span>
-                  <span className="text-white font-medium">{filteredSounds.length}</span>
-                </div>
-              </div>
-            </motion.div>
-          </div>
+              {/* Currently Playing - Desktop */}
+              {currentlyPlaying && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 }}
+                >
+                  <AudioPlayer
+                    audioUrl={currentlyPlaying.audio_url}
+                    title={currentlyPlaying.title}
+                  />
+                </motion.div>
+              )}
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Mobile Sound Details Modal */}
+      <SoundDetailsModal 
+        sound={selectedSound}
+        isOpen={isDetailsModalOpen}
+        onClose={closeDetailsModal}
+        isPlaying={currentlyPlaying?.id === selectedSound?.id}
+        onPlayToggle={handlePlay}
+      />
+
+      {/* Mobile Floating Player */}
+      {isMobile && currentlyPlaying && (
+        <FloatingMusicPlayer 
+          currentSound={currentlyPlaying}
+          onClose={closePlayer}
+        />
+      )}
     </div>
   )
 }

@@ -1,14 +1,24 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Play, Pause, Volume2, VolumeX, RotateCcw, AlertCircle } from 'lucide-react'
+import { Play, Pause, Volume2, VolumeX, RotateCcw, AlertCircle, Maximize2, Minimize2 } from 'lucide-react'
 
 interface AudioPlayerProps {
   audioUrl: string
   title: string
   className?: string
+  isMinimized?: boolean
+  onToggleMinimize?: () => void
+  onClose?: () => void
 }
 
-export const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl, title, className = '' }) => {
+export const AudioPlayer: React.FC<AudioPlayerProps> = ({ 
+  audioUrl, 
+  title, 
+  className = '',
+  isMinimized = false,
+  onToggleMinimize,
+  onClose
+}) => {
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -162,11 +172,83 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl, title, class
 
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0
 
+  // Render mini player for mobile
+  if (isMinimized) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className={`fixed bottom-0 left-0 right-0 bg-dark-800/90 backdrop-blur-md border-t border-dark-600 p-3 z-50 ${className}`}
+      >
+        <audio 
+          ref={audioRef} 
+          src={audioUrl} 
+          preload="metadata"
+          crossOrigin="anonymous"
+        />
+        
+        <div className="flex items-center">
+          {/* Play/Pause Button */}
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={togglePlay}
+            disabled={isLoading || error !== null}
+            className="w-10 h-10 bg-neon-blue/20 border border-neon-blue/30 rounded-full flex items-center justify-center text-neon-blue hover:bg-neon-blue/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mr-3"
+          >
+            {isBuffering ? (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                className="w-4 h-4 border-2 border-neon-blue border-t-transparent rounded-full"
+              />
+            ) : isPlaying ? (
+              <Pause className="w-4 h-4" />
+            ) : (
+              <Play className="w-4 h-4 ml-0.5" />
+            )}
+          </motion.button>
+          
+          {/* Title and Progress */}
+          <div className="flex-1 min-w-0">
+            <h4 className="text-sm font-medium text-white truncate">{title}</h4>
+            
+            {/* Progress Bar */}
+            <div className="relative w-full h-1 bg-dark-600 rounded-full mt-1">
+              <motion.div
+                className="absolute top-0 left-0 h-full bg-neon-blue rounded-full"
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+          </div>
+          
+          {/* Time */}
+          <div className="text-xs text-gray-400 mx-3 hidden sm:block">
+            {formatTime(currentTime)} / {formatTime(duration)}
+          </div>
+          
+          {/* Expand Button */}
+          {onToggleMinimize && (
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={onToggleMinimize}
+              className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white"
+            >
+              <Maximize2 className="w-4 h-4" />
+            </motion.button>
+          )}
+        </div>
+      </motion.div>
+    )
+  }
+
+  // Render full player
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-dark-800/50 backdrop-blur-sm border border-dark-600 rounded-xl p-6 ${className}`}
+      className={`bg-dark-800/50 backdrop-blur-sm border border-dark-600 rounded-xl p-4 ${className}`}
     >
       <audio 
         ref={audioRef} 
@@ -175,9 +257,22 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl, title, class
         crossOrigin="anonymous"
       />
       
-      <div className="space-y-4">
-        {/* Title */}
-        <h3 className="text-lg font-semibold text-white truncate">{title}</h3>
+      <div className="space-y-3">
+        {/* Header with title and minimize button */}
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-white truncate">{title}</h3>
+          
+          {onToggleMinimize && (
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={onToggleMinimize}
+              className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white"
+            >
+              <Minimize2 className="w-4 h-4" />
+            </motion.button>
+          )}
+        </div>
         
         {/* Error Message */}
         {error && (
@@ -188,14 +283,14 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl, title, class
         )}
         
         {/* Waveform Visualization */}
-        <div className="relative h-16 bg-dark-700 rounded-lg overflow-hidden">
+        <div className="relative h-12 bg-dark-700 rounded-lg overflow-hidden">
           <motion.div
             className="absolute inset-0 bg-gradient-to-r from-neon-blue/20 to-neon-green/20"
             style={{ width: `${progressPercentage}%` }}
             transition={{ duration: 0.1 }}
           />
           <div className="absolute inset-0 flex items-center justify-center">
-            {[...Array(50)].map((_, i) => (
+            {[...Array(30)].map((_, i) => (
               <motion.div
                 key={i}
                 className="w-1 bg-neon-blue/60 mx-0.5 rounded-full"
@@ -227,7 +322,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl, title, class
         </div>
 
         {/* Progress Bar */}
-        <div className="space-y-2">
+        <div className="space-y-1">
           <input
             type="range"
             min="0"
@@ -244,24 +339,24 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl, title, class
         </div>
 
         {/* Controls */}
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-3">
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={togglePlay}
             disabled={isLoading || error !== null}
-            className="w-12 h-12 bg-neon-blue/20 border border-neon-blue/30 rounded-full flex items-center justify-center text-neon-blue hover:bg-neon-blue/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-10 h-10 bg-neon-blue/20 border border-neon-blue/30 rounded-full flex items-center justify-center text-neon-blue hover:bg-neon-blue/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isBuffering ? (
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                className="w-5 h-5 border-2 border-neon-blue border-t-transparent rounded-full"
+                className="w-4 h-4 border-2 border-neon-blue border-t-transparent rounded-full"
               />
             ) : isPlaying ? (
-              <Pause className="w-5 h-5" />
+              <Pause className="w-4 h-4" />
             ) : (
-              <Play className="w-5 h-5 ml-0.5" />
+              <Play className="w-4 h-4 ml-0.5" />
             )}
           </motion.button>
 
@@ -270,9 +365,9 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({ audioUrl, title, class
             whileTap={{ scale: 0.9 }}
             onClick={restart}
             disabled={!duration || error !== null}
-            className="w-10 h-10 bg-dark-700 border border-dark-600 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:border-neon-blue/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-8 h-8 bg-dark-700 border border-dark-600 rounded-full flex items-center justify-center text-gray-400 hover:text-white hover:border-neon-blue/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-3 h-3" />
           </motion.button>
 
           <div className="flex-1" />
